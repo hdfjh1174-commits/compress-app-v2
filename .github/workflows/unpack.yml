@@ -1,0 +1,33 @@
+name: Unpack project.zip
+
+on:
+  push:
+    paths:
+      - 'project.zip'
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract project.zip into repo root
+        run: |
+          unzip -o project.zip -d _extracted
+          if [ "$(ls _extracted | wc -l)" -eq 1 ] && [ -d "_extracted/$(ls _extracted)" ]; then
+            cp -r "_extracted/$(ls _extracted)/." .
+          else
+            cp -r _extracted/. .
+          fi
+          rm -rf _extracted
+          rm -f project.zip
+
+      - name: Commit extracted files
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add -A
+          git commit -m "Auto-extract project.zip" || echo "nothing to commit"
+          git push
